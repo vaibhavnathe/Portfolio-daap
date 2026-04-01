@@ -6,7 +6,7 @@ import {
     WalletDisconnectButton,
     WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 
 // Default styles that can be overridden by your app
 import '@solana/wallet-adapter-react-ui/styles.css';
@@ -26,6 +26,10 @@ export function App() {
                     { /* Your app's components go here, nested within the context providers. */ }
                      <Topbar/>
                     <Portfolio/>
+                    <br />
+                    <Send/>
+                    <br />
+                    <Faucet/>
                 </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
@@ -59,6 +63,74 @@ export function App() {
 }
 
 export default App;
+
+
+// Send transaction
+const Send = () => {
+
+  const wallet = useWallet();
+  const {connection} = useConnection();
+
+  return (
+    <>
+      <div>
+        <input type="text" id="address" placeholder="Wallet address" />
+        <input type="text" id="amount" placeholder="amount"/>
+
+        <button onClick={async() => {
+          const transaction = new Transaction().add(
+            SystemProgram.transfer(
+              {
+                fromPubkey: wallet.publicKey,
+                toPubkey : new PublicKey(document.getElementById("address")!.value),
+                lamports:  document.getElementById("amount")!.value * 1000_000_000,
+              }
+            )
+          );
+
+          // const signature = await sendAndConfirmRawTransaction(connection, txn, [myWallet, newAccount])    // we can't do this -> we/dapp don't store/have user's private key
+          // instead of above , we do
+          await wallet.sendTransaction(transaction, connection);    // sebdTransaction comes from solana wallet-adapter
+
+        }}>
+          Send
+        </button>
+
+      </div>
+    </>
+  )
+}
+// export default Send;
+
+
+// Faucet -> requesting sol
+const Faucet = () => {
+
+  const {connection} = useConnection();
+
+  return(
+    <div>
+
+      <input type="text" id="address" placeholder="Address" />
+      <input type="text" id="amount" placeholder="Amount" />
+
+      <button
+        onClick={async() => {
+          const pubKey = document.getElementById("address")!.value;
+          const amount = document.getElementById("amount")!.value;
+
+          console.log(pubKey);
+          console.log(amount);
+
+          // await connection.requestAirdrop(pubKey, amount * LAMPORTS_PER_SOL);
+        }}
+      >
+        Request Sol
+      </button>
+
+    </div>
+  );
+}
 
 
 const Topbar = () => {
